@@ -5,8 +5,11 @@ app = FastAPI()
 # Получаем ключ из переменных окружения
 API_KEY = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
 # Настраиваем клиент библиотеки
-if API_KEY: genai.configure(api_key=API_KEY)
-@app.post("/") async def handle_alice(request: Request): data = await request.json()
+if API_KEY: 
+    genai.configure(api_key=API_KEY)
+@app.post("/") 
+async def handle_alice(request: Request): 
+    data = await request.json()
 # Извлекаем текст от пользователя
 user_message = (
     data.get("request", {}).get("command")
