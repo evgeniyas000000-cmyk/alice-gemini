@@ -4,8 +4,9 @@ from google import genai
 
 app = FastAPI()
 
-# Инициализируем клиент при старте приложения
 API_KEY = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+
+# Инициализируем клиент при старте
 client = genai.Client(api_key=API_KEY) if API_KEY else None
 
 @app.post("/")
@@ -18,19 +19,19 @@ async def handle_alice(request: Request):
         or "Привет"
     )
     
-    reply_text = "Ой, что-то пошло не так, не могу связаться с нейросетью."
+    reply_text = "Ой, не удалось получить ответ от нейросети."
     
     if client:
         try:
-            # gemini-2.0-flash — самая быстрая модель, отвечает мгновенно
+            # Запрашиваем именно актуальную модель gemini-3.8-flash
             response = client.models.generate_content(
-                model="gemini-2.0-flash",
+                model="gemini-3.8-flash",
                 contents=user_message,
             )
             reply_text = response.text
         except Exception as e:
             print("DEBUG_ERROR:", repr(e))
-            reply_text = f"Ошибка: {str(e)}"
+            reply_text = f"Ошибка Gemini: {str(e)}"
 
     return {
         "response": {
