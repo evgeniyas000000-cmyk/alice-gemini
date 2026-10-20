@@ -35,6 +35,7 @@ async def handle_alice(request: Request):
     )
     reply_text = response.text
   except Exception as e:
+    print("DEBUG_ERROR:", repr(e))  # <--- Добавьте эту строчку
     reply_text = "Ой, что-то пошло не так, не могу связаться с нейросетью."
 
   # Возвращаем ответ в специальном формате, который понимает Яндекс Алиса
