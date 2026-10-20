@@ -1,28 +1,11 @@
 import os
 import asyncio
+import httpx
 from fastapi import FastAPI, Request
-from google import genai
 
 app = FastAPI()
 
 API_KEY = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
-
-# Инициализируем клиент
-client = genai.Client(api_key=API_KEY) if API_KEY else None
-
-
-def fetch_gemini_response(user_message: str) -> str:
-    """Синхронный вызов Gemini API"""
-    if not client:
-        return "Ошибка: API ключ не задан."
-    
-    # Исправлено на актуальную модель из логов Google
-    response = client.models.generate_content(
-        model="gemini-3.8-flash",
-        contents=user_message,
-    )
-    return response.text
-
 
 @app.post("/")
 async def handle_alice(request: Request):
@@ -36,20 +19,34 @@ async def handle_alice(request: Request):
 
     reply_text = "Извините, нейросеть задумалась. Попробуйте ещё раз."
 
-    if client:
+    if API_KEY:
         try:
-            # Запускаем вызов Gemini в отдельном потоке с лимитом времени 3.5 секунды,
-            # чтобы гарантированно уложиться в 5-секундный тайм-аут Яндекса
-            reply_text = await asyncio.wait_for(
-                asyncio.to_thread(fetch_gemini_response, user_message),
-                timeout=4.5,
-            )
+            # Делаем быстрый прямой HTTP-запрос к API Gemini (без тяжелого SDK, который тормозит на Render)
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key={API_KEY}"
+            payload = {
+                "contents": [{"parts": [{"text": user_message}]}]
+            }
+            
+            async with httpx.AsyncClient() as client:
+                # Ограничиваем сетевой запрос строгими 3 секундами
+                response = await asyncio.wait_for(
+                    client.post(url, json=payload, timeout=3.0),
+                    timeout=3.5
+                )
+                
+                if response.status_code == 200:
+                    res_data = response.json()
+                    reply_text = res_data["candidates"][0]["content"]["parts"][0]["text"]
+                else:
+                    print(f"API Error [{response.status_code}]: {response.text}")
+                    reply_text = f"Ошибка API: {response.status_code}"
+                    
         except asyncio.TimeoutError:
-            print("DEBUG_TIMEOUT: Запрос к Gemini превысил 4.5 секунды")
-            reply_text = "Я засмотрелась на звезды и не успела ответить. Спроси еще раз!"
+            print("DEBUG_TIMEOUT: Прямой HTTP-запрос превысил 3.5 секунды")
+            reply_text = "Я здесь, но сервер ответил слишком медленно!"
         except Exception as e:
             print("DEBUG_ERROR:", repr(e))
-            reply_text = f"Ошибка: {str(e)}"
+            reply_text = "Что-то пошло не так при обращении к сети."
 
     return {
         "response": {
