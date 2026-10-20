@@ -42,10 +42,10 @@ async def handle_alice(request: Request):
             # чтобы гарантированно уложиться в 5-секундный тайм-аут Яндекса
             reply_text = await asyncio.wait_for(
                 asyncio.to_thread(fetch_gemini_response, user_message),
-                timeout=3.5,
+                timeout=4.5,
             )
         except asyncio.TimeoutError:
-            print("DEBUG_TIMEOUT: Запрос к Gemini превысил 3.5 секунды")
+            print("DEBUG_TIMEOUT: Запрос к Gemini превысил 4.5 секунды")
             reply_text = "Я засмотрелась на звезды и не успела ответить. Спроси еще раз!"
         except Exception as e:
             print("DEBUG_ERROR:", repr(e))
