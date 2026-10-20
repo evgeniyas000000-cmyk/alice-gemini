@@ -1,4 +1,6 @@
-import os from fastapi import FastAPI, Request import google.generativeai as genai
+import os 
+from fastapi import FastAPI, Request 
+import google.generativeai as genai
 app = FastAPI()
 # Получаем ключ из переменных окружения
 API_KEY = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
