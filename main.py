@@ -16,8 +16,9 @@ def fetch_gemini_response(user_message: str) -> str:
     if not client:
         return "Ошибка: API ключ не задан."
     
+    # Исправлено на актуальную модель из логов Google
     response = client.models.generate_content(
-        model="gemini-2.0-flash",
+        model="gemini-3.8-flash",
         contents=user_message,
     )
     return response.text
