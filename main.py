@@ -1,4 +1,4 @@
-mport os
+import os
 from fastapi import FastAPI, Request
 import google.generativeai as genai
 
